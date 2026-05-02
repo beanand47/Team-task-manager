@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login | TaskFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="auth-page">
+  <section class="auth-card">
+    <div class="auth-logo">TaskFlow</div>
+    <div class="card" style="box-shadow:none; margin-bottom:16px; padding:14px;">
+      <div style="font-weight:800; margin-bottom:10px;">Demo Accounts</div>
+      <div class="form-grid" style="gap:10px;">
+        <button class="btn btn-primary full demo-login" type="button" data-email="admin@test.com" data-password="Test1234">
+          Login as Admin
+        </button>
+        <button class="btn btn-ghost full demo-login" type="button" data-email="member1@test.com" data-password="Test1234">
+          Login as Member 1
+        </button>
+        <button class="btn btn-ghost full demo-login" type="button" data-email="member2@test.com" data-password="Test1234">
+          Login as Member 2
+        </button>
+      </div>
+      <p class="muted mono" style="font-size:12px; line-height:1.6; margin-bottom:0;">
+        admin@test.com / Test1234<br>
+        member1@test.com / Test1234<br>
+        member2@test.com / Test1234
+      </p>
+    </div>
+    <form id="login-form" class="form-grid">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary full" type="submit">Login</button>
+      <div id="error" class="error-text"></div>
+      <p class="muted">New here? <a href="/signup">Create an account</a></p>
+    </form>
+  </section>
+  <script src="/static/js/api.js"></script>
+  <script>
+    async function loginWithCredentials(email, password) {
+      const error = document.getElementById("error");
+      error.textContent = "";
+      try {
+        const result = await apiPost("/api/auth/login", {
+          email,
+          password
+        });
+        localStorage.setItem("access_token", result.access_token);
+        localStorage.setItem("user", JSON.stringify(result.user));
+        window.location.href = "/dashboard";
+      } catch (err) {
+        error.textContent = err.message;
+      }
+    }
+
+    document.querySelectorAll(".demo-login").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.getElementById("email").value = button.dataset.email;
+        document.getElementById("password").value = button.dataset.password;
+        loginWithCredentials(button.dataset.email, button.dataset.password);
+      });
+    });
+
+    document.getElementById("login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      loginWithCredentials(
+        document.getElementById("email").value,
+        document.getElementById("password").value
+      );
+    });
+  </script>
+</body>
+</html>

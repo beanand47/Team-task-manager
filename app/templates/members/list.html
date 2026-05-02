@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Members | TaskFlow{% endblock %}
+{% block page_title %}Members{% endblock %}
+{% block body_attrs %}data-project-id="{{ project_id }}"{% endblock %}
+{% block content %}
+<section id="invite-card" class="card" style="margin-bottom: 18px; display:none;">
+  <form id="invite-form" class="form-grid">
+    <div class="content-header"><h2>Invite Member</h2></div>
+    <div class="field"><label>Email</label><input id="invite-email" type="email" required></div>
+    <div class="field"><label>Role</label><select id="invite-role"><option value="member">Member</option><option value="admin">Admin</option></select></div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Invite</button></div>
+  </form>
+</section>
+<div id="members-wrap"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const projectId = document.body.dataset.projectId;
+  let isAdmin = false;
+  let currentUser = null;
+
+  function memberRow(member) {
+    const canRemove = isAdmin && member.user_id !== currentUser?.id;
+    const roleCell = isAdmin ? `<select data-role-user="${member.user_id}"><option value="member" ${member.role === "member" ? "selected" : ""}>Member</option><option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option></select>` : `<span class="badge status-in_progress">${member.role}</span>`;
+    return `<tr>
+      <td><div class="member-row"><span class="initials">${initials(member.user.name)}</span><strong>${member.user.name}</strong></div></td>
+      <td>${member.user.email}</td>
+      <td>${roleCell}</td>
+      <td>${formatDateTime(member.joined_at)}</td>
+      <td><button class="btn btn-danger" data-remove-user="${member.user_id}" ${canRemove ? "" : "disabled"}>Remove</button></td>
+    </tr>`;
+  }
+
+  async function loadMembers() {
+    currentUser = getStoredUser();
+    const members = await apiGet(`/api/projects/${projectId}/members`);
+    const me = members.find((member) => member.user_id === currentUser?.id);
+    isAdmin = me?.role === "admin";
+    document.getElementById("invite-card").style.display = isAdmin ? "block" : "none";
+    document.getElementById("members-wrap").innerHTML = members.length ? `
+      <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${members.map(memberRow).join("")}</tbody></table>` :
+      `<div class="empty-state card"><div class="empty-illustration">○</div><div>No members found.</div></div>`;
+    bindMemberActions();
+  }
+
+  function bindMemberActions() {
+    document.querySelectorAll("[data-role-user]").forEach((select) => {
+      select.addEventListener("change", async () => {
+        try {
+          await apiPut(`/api/projects/${projectId}/members/${select.dataset.roleUser}`, { role: select.value });
+          showToast("Role updated");
+          await loadMembers();
+        } catch (error) { showToast(error.message, "error"); }
+      });
+    });
+    document.querySelectorAll("[data-remove-user]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Remove this member?")) return;
+        try {
+          await apiDelete(`/api/projects/${projectId}/members/${button.dataset.removeUser}`);
+          showToast("Member removed");
+          await loadMembers();
+        } catch (error) { showToast(error.message, "error"); }
+      });
+    });
+  }
+
+  document.getElementById("invite-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await apiPost(`/api/projects/${projectId}/members`, {
+        email: document.getElementById("invite-email").value,
+        role: document.getElementById("invite-role").value
+      });
+      event.target.reset();
+      showToast("Member invited");
+      await loadMembers();
+    } catch (error) { showToast(error.message, "error"); }
+  });
+  document.addEventListener("DOMContentLoaded", () => loadMembers().catch((error) => showToast(error.message, "error")));
+</script>
+{% endblock %}

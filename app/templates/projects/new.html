@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}New Project | TaskFlow{% endblock %}
+{% block page_title %}New Project{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 720px;">
+  <form id="project-form" class="form-grid">
+    <div class="field"><label for="name">Project name</label><input id="name" required maxlength="150"></div>
+    <div class="field"><label for="description">Description</label><textarea id="description"></textarea></div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="/projects">Cancel</a>
+      <button class="btn btn-primary" type="submit">Create Project</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById("project-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const project = await apiPost("/api/projects", {
+        name: document.getElementById("name").value,
+        description: document.getElementById("description").value || null
+      });
+      window.location.href = `/projects/${project.id}`;
+    } catch (error) { showToast(error.message, "error"); }
+  });
+</script>
+{% endblock %}

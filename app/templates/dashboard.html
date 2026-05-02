@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | TaskFlow{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<section class="stats-grid">
+  <article class="card stat-card"><div><div class="stat-label">My Tasks</div><div id="my-count" class="stat-number">0</div></div><span class="badge status-in_progress">Active</span></article>
+  <article id="overdue-card" class="card stat-card danger"><div><div class="stat-label">Overdue</div><div id="overdue-count" class="stat-number">0</div></div><span class="badge priority-high">Late</span></article>
+  <article class="card stat-card success"><div><div class="stat-label">Projects</div><div id="project-count" class="stat-number">0</div></div><span class="badge status-done">Teams</span></article>
+</section>
+<section style="margin-top: 22px;">
+  <div class="content-header"><h2>Assigned Tasks</h2></div>
+  <div id="tasks-wrap"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  async function loadDashboard() {
+    try {
+      const data = await apiGet("/api/dashboard");
+      document.getElementById("my-count").textContent = data.total_my_tasks;
+      document.getElementById("overdue-count").textContent = data.total_overdue;
+      document.getElementById("project-count").textContent = data.total_projects;
+      if (data.total_overdue > 0) document.getElementById("overdue-card").classList.add("pulse");
+      const projects = new Map(data.project_stats.map((item) => [item.project.id, item.project.name]));
+      const tasks = data.my_tasks;
+      document.getElementById("tasks-wrap").innerHTML = tasks.length ? `
+        <table><thead><tr><th>Title</th><th>Project</th><th>Status</th><th>Priority</th><th>Due Date</th><th>Overdue</th></tr></thead>
+        <tbody>${tasks.map((task) => `
+          <tr class="clickable-row" onclick="window.location.href='/tasks/${task.id}'">
+            <td>${task.title}</td><td>${projects.get(task.project_id) || "Project"}</td><td>${statusBadge(task.status)}</td><td>${priorityBadge(task.priority)}</td><td>${formatDate(task.due_date)}</td><td>${isOverdue(task.due_date, task.status) ? "Yes" : ""}</td>
+          </tr>`).join("")}</tbody></table>` :
+        `<div class="empty-state card"><div class="empty-illustration">✓</div><div>No assigned tasks right now.</div></div>`;
+    } catch (error) { showToast(error.message, "error"); }
+  }
+  document.addEventListener("DOMContentLoaded", loadDashboard);
+</script>
+{% endblock %}

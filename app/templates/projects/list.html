@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Projects | TaskFlow{% endblock %}
+{% block page_title %}Projects{% endblock %}
+{% block content %}
+<div class="content-header">
+  <h2>Your Projects</h2>
+  <a class="btn btn-primary" href="/projects/new">New Project</a>
+</div>
+<div id="projects-grid" class="project-grid"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+  async function loadProjects() {
+    try {
+      const projects = await apiGet("/api/projects");
+      const grid = document.getElementById("projects-grid");
+      if (!projects.length) {
+        grid.className = "";
+        grid.innerHTML = `<div class="empty-state card"><div class="empty-illustration">+</div><div>No projects yet.</div><a class="btn btn-primary" href="/projects/new">Create Project</a></div>`;
+        return;
+      }
+      const user = getStoredUser();
+      const details = await Promise.all(projects.map((project) => apiGet(`/api/projects/${project.id}`).catch(() => null)));
+      grid.innerHTML = projects.map((project, index) => {
+        const detail = details[index];
+        const member = detail?.members?.find((item) => item.user_id === user?.id);
+        return `
+        <article class="card" onclick="window.location.href='/projects/${project.id}'" style="cursor:pointer;">
+          <h3>${project.name}</h3>
+          <p class="muted truncate">${project.description || "No description"}</p>
+          <div class="task-meta">
+            <span class="badge status-in_progress">${member?.role || "member"}</span>
+            <span class="badge priority-low">${detail?.members?.length || 0} members</span>
+            <span class="badge priority-medium">${detail?.task_counts?.total || 0} tasks</span>
+          </div>
+        </article>`;
+      }).join("");
+    } catch (error) { showToast(error.message, "error"); }
+  }
+  document.addEventListener("DOMContentLoaded", loadProjects);
+</script>
+{% endblock %}

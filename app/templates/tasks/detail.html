@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Task | TaskFlow{% endblock %}
+{% block page_title %}<span id="task-page-title">Task</span>{% endblock %}
+{% block body_attrs %}data-task-id="{{ task_id }}"{% endblock %}
+{% block content %}
+<div style="display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px;">
+  <section class="card">
+    <div id="view-mode">
+      <h2 id="task-title-view"></h2>
+      <p id="task-description-view" class="muted"></p>
+    </div>
+    <form id="edit-form" class="form-grid" style="display:none;">
+      <div class="field"><label>Title</label><input id="edit-title"></div>
+      <div class="field"><label>Description</label><textarea id="edit-description"></textarea></div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  </section>
+  <aside class="card">
+    <div class="form-grid">
+      <div class="field"><label>Status</label><select id="status-select"><option value="todo">Todo</option><option value="in_progress">In Progress</option><option value="done">Done</option></select></div>
+      <div id="admin-fields" class="form-grid" style="display:none;">
+        <div class="field"><label>Priority</label><select id="priority-select"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        <div class="field"><label>Assignee</label><select id="assignee-select"><option value="">Unassigned</option></select></div>
+        <div class="field"><label>Due Date</label><input id="due-date" type="date"></div>
+      </div>
+      <div id="readonly-meta"></div>
+      <button id="save-sidebar" class="btn btn-primary" type="button" style="display:none;">Save Changes</button>
+      <button id="delete-task" class="btn btn-danger" type="button" style="display:none;">Delete Task</button>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const taskId = document.body.dataset.taskId;
+  let task = null;
+  let members = [];
+  let isAdmin = false;
+
+  function findMember(userId) {
+    return members.find((member) => member.user_id === userId);
+  }
+
+  function renderTask() {
+    document.getElementById("task-page-title").textContent = task.title;
+    document.getElementById("task-title-view").textContent = task.title;
+    document.getElementById("task-description-view").textContent = task.description || "No description";
+    document.getElementById("edit-title").value = task.title;
+    document.getElementById("edit-description").value = task.description || "";
+    document.getElementById("status-select").value = task.status;
+    document.getElementById("priority-select").value = task.priority;
+    document.getElementById("assignee-select").value = task.assigned_to || "";
+    document.getElementById("due-date").value = task.due_date || "";
+    const assignee = findMember(task.assigned_to);
+    const creator = findMember(task.created_by);
+    document.getElementById("readonly-meta").innerHTML = `
+      <p>${priorityBadge(task.priority)}</p>
+      <p class="member-row"><span class="initials">${initials(assignee?.user.name || "Unassigned")}</span>${assignee?.user.name || "Unassigned"}</p>
+      <p class="muted">Due: ${formatDate(task.due_date)}</p>
+      ${isOverdue(task.due_date, task.status) ? `<p class="badge priority-high">Overdue</p>` : ""}
+      <p class="muted">Created by: ${creator?.user.name || "Unknown"}</p>
+      <p class="muted">Created: ${formatDateTime(task.created_at)}</p>`;
+    document.getElementById("edit-form").style.display = isAdmin ? "grid" : "none";
+    document.getElementById("view-mode").style.display = isAdmin ? "none" : "block";
+    document.getElementById("admin-fields").style.display = isAdmin ? "grid" : "none";
+    document.getElementById("save-sidebar").style.display = isAdmin ? "inline-flex" : "none";
+    document.getElementById("delete-task").style.display = isAdmin ? "inline-flex" : "none";
+  }
+
+  async function loadTask() {
+    task = await apiGet(`/api/tasks/${taskId}`);
+    const project = await apiGet(`/api/projects/${task.project_id}`);
+    const currentUser = getStoredUser();
+    members = project.members.map((member) => ({ ...member, user: { id: member.user_id, name: member.name, email: member.email } }));
+    isAdmin = project.members.some((member) => member.user_id === currentUser?.id && member.role === "admin");
+    document.getElementById("assignee-select").innerHTML = `<option value="">Unassigned</option>` + members.map((member) => `<option value="${member.user_id}">${member.user.name}</option>`).join("");
+    renderTask();
+  }
+
+  async function updateTask(payload) {
+    task = await apiPut(`/api/tasks/${taskId}`, payload);
+    showToast("Task updated");
+    renderTask();
+  }
+
+  document.getElementById("status-select").addEventListener("change", async (event) => {
+    try { await updateTask({ status: event.target.value }); } catch (error) { showToast(error.message, "error"); }
+  });
+  document.getElementById("edit-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await updateTask({ title: document.getElementById("edit-title").value, description: document.getElementById("edit-description").value || null });
+    } catch (error) { showToast(error.message, "error"); }
+  });
+  document.getElementById("save-sidebar").addEventListener("click", async () => {
+    try {
+      await updateTask({
+        status: document.getElementById("status-select").value,
+        priority: document.getElementById("priority-select").value,
+        assigned_to: document.getElementById("assignee-select").value || null,
+        due_date: document.getElementById("due-date").value || null
+      });
+    } catch (error) { showToast(error.message, "error"); }
+  });
+  document.getElementById("delete-task").addEventListener("click", async () => {
+    if (!confirm("Delete this task?")) return;
+    try {
+      await apiDelete(`/api/tasks/${taskId}`);
+      window.location.href = `/projects/${task.project_id}`;
+    } catch (error) { showToast(error.message, "error"); }
+  });
+  document.addEventListener("DOMContentLoaded", () => loadTask().catch((error) => showToast(error.message, "error")));
+</script>
+{% endblock %}

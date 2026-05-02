@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TaskFlow{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body {% block body_attrs %}{% endblock %}>
+  <aside class="sidebar">
+    <a class="logo" href="/dashboard"><span class="logo-mark">T</span><span>TaskFlow</span></a>
+    <nav class="nav">
+      <a class="nav-link" href="/dashboard">Dashboard</a>
+      <a class="nav-link" href="/projects">Projects</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-name" data-user-name>Team member</div>
+      <div class="user-meta"><span class="badge status-in_progress">Member</span><span data-user-email></span></div>
+      <button id="logout-btn" class="btn btn-ghost full" type="button">Logout</button>
+    </div>
+  </aside>
+  <header class="topbar">
+    <button id="sidebar-toggle" class="btn hamburger" type="button">Menu</button>
+    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+    <div class="avatar" data-user-initials>U</div>
+  </header>
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+  <div id="toast-container"></div>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/main.js"></script>
+  <script>
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    if (storedUser) {
+      document.querySelectorAll("[data-user-name]").forEach((el) => { el.textContent = storedUser.name; });
+      document.querySelectorAll("[data-user-email]").forEach((el) => { el.textContent = storedUser.email; });
+      document.querySelectorAll("[data-user-initials]").forEach((el) => {
+        const parts = (storedUser.name || storedUser.email || "U").trim().split(/\s+/);
+        el.textContent = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+      });
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

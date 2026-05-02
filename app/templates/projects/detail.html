@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Project | TaskFlow{% endblock %}
+{% block page_title %}<span id="project-title">Project</span>{% endblock %}
+{% block body_attrs %}data-project-id="{{ project_id }}"{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="content-header">
+    <div><h2 id="project-name">Project</h2><p id="project-description" class="muted"></p><div id="member-avatars" class="avatar-row"></div></div>
+    <div id="admin-actions" class="form-actions" style="display:none;">
+      <a class="btn btn-ghost" href="/projects/{{ project_id }}/members">Manage Members</a>
+      <button id="delete-project" class="btn btn-danger" type="button">Delete</button>
+    </div>
+  </div>
+</section>
+<section data-kanban-board data-project-id="{{ project_id }}" class="kanban-board" style="margin-top: 18px;">
+  {% for status, label in [("todo", "Todo"), ("in_progress", "In Progress"), ("done", "Done")] %}
+  <div class="kanban-column" data-status="{{ status }}">
+    <div class="column-header"><div class="column-title">{{ label }} <span class="badge count-badge">0</span></div>{% if status == "todo" %}<button id="add-task-btn" class="btn btn-primary" style="display:none;" type="button">Add Task</button>{% endif %}</div>
+    <div class="column-body"></div>
+  </div>
+  {% endfor %}
+</section>
+<div id="task-modal" class="modal-backdrop">
+  <section class="card modal">
+    <h2>Add Task</h2>
+    <form id="task-form" class="form-grid">
+      <div class="field"><label>Title</label><input id="task-title" required></div>
+      <div class="field"><label>Description</label><textarea id="task-description"></textarea></div>
+      <div class="field"><label>Priority</label><select id="task-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+      <div class="field"><label>Assign to</label><select id="task-assignee"><option value="">Unassigned</option></select></div>
+      <div class="field"><label>Due date</label><input id="task-due" type="date"></div>
+      <div class="form-actions"><button id="close-modal" class="btn btn-ghost" type="button">Cancel</button><button class="btn btn-primary" type="submit">Create</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/kanban.js"></script>
+<script>
+  const projectId = document.body.dataset.projectId;
+  let projectMembers = [];
+  let isAdmin = false;
+  async function loadProject() {
+    const data = await apiGet(`/api/projects/${projectId}`);
+    projectMembers = data.members;
+    const user = getStoredUser();
+    isAdmin = data.members.some((member) => member.user_id === user?.id && member.role === "admin");
+    document.getElementById("project-title").textContent = data.project.name;
+    document.getElementById("project-name").textContent = data.project.name;
+    document.getElementById("project-description").textContent = data.project.description || "No description";
+    document.getElementById("member-avatars").innerHTML = data.members.map((member) => `<span class="initials" title="${member.name}">${initials(member.name)}</span>`).join("");
+    document.getElementById("admin-actions").style.display = isAdmin ? "flex" : "none";
+    document.getElementById("add-task-btn").style.display = isAdmin ? "inline-flex" : "none";
+    document.getElementById("task-assignee").innerHTML = `<option value="">Unassigned</option>` + data.members.map((member) => `<option value="${member.user_id}">${member.name}</option>`).join("");
+  }
+  document.getElementById("add-task-btn").addEventListener("click", () => document.getElementById("task-modal").classList.add("open"));
+  document.getElementById("close-modal").addEventListener("click", () => document.getElementById("task-modal").classList.remove("open"));
+  document.getElementById("task-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await apiPost(`/api/projects/${projectId}/tasks`, {
+        title: document.getElementById("task-title").value,
+        description: document.getElementById("task-description").value || null,
+        priority: document.getElementById("task-priority").value,
+        assigned_to: document.getElementById("task-assignee").value || null,
+        due_date: document.getElementById("task-due").value || null
+      });
+      document.getElementById("task-modal").classList.remove("open");
+      event.target.reset();
+      await window.reloadKanban?.();
+      showToast("Task created");
+    } catch (error) { showToast(error.message, "error"); }
+  });
+  document.getElementById("delete-project").addEventListener("click", async () => {
+    if (!confirm("Delete this project?")) return;
+    await apiDelete(`/api/projects/${projectId}`);
+    window.location.href = "/projects";
+  });
+  document.addEventListener("DOMContentLoaded", () => loadProject().catch((error) => showToast(error.message, "error")));
+</script>
+{% endblock %}
