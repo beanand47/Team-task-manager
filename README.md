@@ -86,5 +86,4 @@ Team Task Manager is a full-stack Python web application for managing projects, 
    ```
 
 ## Live URL
-
-(add after deploy)
+https://team-task-manager-project.up.railway.app/
