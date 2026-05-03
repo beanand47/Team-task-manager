@@ -6,50 +6,650 @@
   <title>Login | TaskFlow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0D1117;
+      --panel: #161B22;
+      --border: #30363D;
+      --text: #E6EDF3;
+      --muted: #8B949E;
+      --accent: #6366F1;
+      --accent-hover: #4F46E5;
+      --emerald: #10B981;
+      --danger: #EF4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 60% 40%;
+      background: var(--bg);
+    }
+
+    .brand-side {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 34px 44px;
+      display: flex;
+      flex-direction: column;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 22% 26%, rgba(99, 102, 241, 0.15), transparent 28%),
+        radial-gradient(circle at 86% 72%, rgba(16, 185, 129, 0.11), transparent 26%),
+        #0D1117;
+    }
+
+    .brand-side::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      opacity: 0.45;
+      background-image: radial-gradient(rgba(230, 237, 243, 0.28) 1px, transparent 1px);
+      background-size: 22px 22px;
+      mask-image: linear-gradient(90deg, black 0%, black 72%, transparent 100%);
+    }
+
+    .brand-side::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 34%;
+      z-index: -1;
+      background: linear-gradient(180deg, transparent, rgba(13, 17, 23, 0.84) 72%, #0D1117);
+      pointer-events: none;
+    }
+
+    .grid-shimmer {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background: linear-gradient(105deg, transparent 18%, rgba(255, 255, 255, 0.07) 44%, transparent 64%);
+      transform: translateX(-110%);
+      animation: shimmer 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .mesh-blob {
+      position: absolute;
+      width: 360px;
+      aspect-ratio: 1;
+      z-index: -2;
+      border-radius: 999px;
+      filter: blur(62px);
+      opacity: 0.72;
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+
+    .blob-one { top: 12%; left: 12%; background: rgba(99, 102, 241, 0.15); }
+    .blob-two { right: 8%; top: 24%; width: 300px; background: rgba(139, 92, 246, 0.13); animation-duration: 12s; }
+    .blob-three { left: 34%; bottom: 4%; width: 330px; background: rgba(16, 185, 129, 0.11); animation-duration: 9s; }
+
+    .shape {
+      position: absolute;
+      z-index: -1;
+      border: 1px solid rgba(199, 210, 254, 0.16);
+      background: rgba(99, 102, 241, 0.13);
+      filter: blur(0.2px);
+      animation: float 9s ease-in-out infinite alternate;
+    }
+
+    .shape.circle { border-radius: 999px; }
+    .shape.diamond { transform: rotate(45deg); border-radius: 8px; }
+    .shape-one { width: 82px; height: 82px; left: 14%; top: 24%; }
+    .shape-two { width: 58px; height: 58px; right: 20%; top: 16%; animation-duration: 11s; background: rgba(16, 185, 129, 0.13); }
+    .shape-three { width: 118px; height: 118px; right: 12%; bottom: 28%; animation-duration: 10s; }
+    .shape-four { width: 64px; height: 64px; left: 38%; bottom: 18%; animation-duration: 12s; background: rgba(16, 185, 129, 0.1); }
+    .shape-five { width: 38px; height: 38px; left: 72%; top: 58%; animation-duration: 8s; }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      width: max-content;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      box-shadow: 0 0 28px rgba(99, 102, 241, 0.42);
+    }
+
+    .hero-copy {
+      width: min(640px, 92%);
+      margin: auto 0;
+      transform: translateY(-16px);
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      color: white;
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .hero-copy p {
+      width: min(560px, 100%);
+      margin: 22px 0 0;
+      color: rgba(230, 237, 243, 0.68);
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .feature-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-pill {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid rgba(230, 237, 243, 0.13);
+      border-radius: 999px;
+      background: rgba(22, 27, 34, 0.42);
+      backdrop-filter: blur(18px);
+      color: rgba(230, 237, 243, 0.88);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .feature-pill svg { width: 17px; height: 17px; color: #A5B4FC; flex: 0 0 auto; }
+
+    .form-side {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px clamp(28px, 5vw, 72px);
+      background: #0D1117;
+      border-left: 1px solid rgba(48, 54, 61, 0.72);
+    }
+
+    .auth-form-wrap {
+      width: min(100%, 420px);
+    }
+
+    .mobile-logo { display: none; margin-bottom: 36px; }
+
+    .form-heading {
+      margin: 0;
+      color: white;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .form-subtitle {
+      margin: 9px 0 30px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .demo-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fieldIn 520ms ease forwards;
+      animation-delay: 40ms;
+    }
+
+    .demo-btn {
+      height: 42px;
+      border: 1px solid rgba(99, 102, 241, 0.44);
+      border-radius: 8px;
+      background: rgba(99, 102, 241, 0.1);
+      color: #C7D2FE;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, color 200ms ease;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(99, 102, 241, 0.78);
+      background: rgba(99, 102, 241, 0.18);
+      color: white;
+    }
+
+    .demo-btn svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fieldIn 520ms ease forwards;
+    }
+
+    .field:nth-child(1) { animation-delay: 80ms; }
+    .field:nth-child(2) { animation-delay: 180ms; }
+    .forgot-row { animation-delay: 280ms; }
+    .form-actions { animation-delay: 380ms; }
+    .auth-link { animation-delay: 480ms; }
+
+    .field label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input {
+      width: 100%;
+      height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      background: #161B22;
+      color: var(--text);
+      padding: 12px 16px;
+      font-size: 14px;
+      transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+    }
+
+    input::placeholder { color: rgba(139, 148, 158, 0.62); }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18), 0 0 28px rgba(99, 102, 241, 0.12);
+      background: #171D27;
+    }
+
+    .password-input { padding-right: 48px; }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      transition: color 200ms ease, background 200ms ease;
+    }
+
+    .toggle-password:hover { color: var(--text); background: rgba(230, 237, 243, 0.06); }
+    .toggle-password svg { width: 18px; height: 18px; }
+
+    .forgot-row,
+    .form-actions,
+    .auth-link {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fieldIn 520ms ease forwards;
+    }
+
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -8px;
+    }
+
+    .forgot-row a {
+      color: #A5B4FC;
+      font-size: 13px;
+      font-weight: 700;
+      transition: color 160ms ease;
+    }
+
+    .forgot-row a:hover { color: #C7D2FE; }
+
+    .submit-btn {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 200ms ease, filter 200ms ease, background 200ms ease, border-color 200ms ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .submit-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.72;
+      transform: none;
+      filter: none;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.38);
+      border-top-color: white;
+      border-radius: 999px;
+      animation: spin 700ms linear infinite;
+    }
+
+    .submit-btn.loading .spinner { display: block; }
+
+    .error-text {
+      min-height: 18px;
+      color: #FCA5A5;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .auth-link {
+      margin: 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .auth-link a {
+      color: #A5B4FC;
+      font-weight: 700;
+      transition: color 160ms ease;
+    }
+
+    .auth-link a:hover { color: #C7D2FE; }
+
+    .proof {
+      margin-top: 44px;
+      color: rgba(139, 148, 158, 0.72);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    #toast-container {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 100;
+      display: grid;
+      gap: 10px;
+    }
+
+    .toast {
+      min-width: 260px;
+      padding: 13px 15px;
+      border-radius: 8px;
+      color: white;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+      animation: slideIn 180ms ease;
+    }
+
+    .toast.success { background: var(--emerald); }
+    .toast.error { background: var(--danger); }
+
+    @keyframes fieldIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0%, 46% { transform: translateX(-110%); opacity: 0; }
+      54% { opacity: 1; }
+      100% { transform: translateX(110%); opacity: 0; }
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(-18px, 12px, 0) scale(1); }
+      to { transform: translate3d(28px, -24px, 0) scale(1.08); }
+    }
+
+    @keyframes float {
+      from { translate: 0 0; }
+      to { translate: 18px -26px; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 1080px) {
+      .brand-side { padding: 30px; }
+      .hero-copy h1 { font-size: 42px; }
+      .feature-row { grid-template-columns: 1fr; width: min(360px, 100%); }
+    }
+
+    @media (max-width: 768px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      .brand-side { display: none; }
+      .form-side {
+        min-height: 100vh;
+        padding: 32px 22px;
+        border-left: 0;
+        align-items: flex-start;
+      }
+      .auth-form-wrap {
+        min-height: calc(100vh - 64px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .mobile-logo { display: inline-flex; }
+      .form-heading { font-size: 28px; }
+      .demo-row { grid-template-columns: 1fr; }
+      #toast-container { left: 16px; right: 16px; }
+      .toast { min-width: 0; }
+    }
+  </style>
 </head>
-<body class="auth-page">
-  <section class="auth-card">
-    <div class="auth-logo">TaskFlow</div>
-    <div class="card" style="box-shadow:none; margin-bottom:16px; padding:14px;">
-      <div style="font-weight:800; margin-bottom:10px;">Demo Accounts</div>
-      <div class="form-grid" style="gap:10px;">
-        <button class="btn btn-primary full demo-login" type="button" data-email="admin@test.com" data-password="Test1234">
-          Login as Admin
-        </button>
-        <button class="btn btn-ghost full demo-login" type="button" data-email="member1@test.com" data-password="Test1234">
-          Login as Member 1
-        </button>
-        <button class="btn btn-ghost full demo-login" type="button" data-email="member2@test.com" data-password="Test1234">
-          Login as Member 2
-        </button>
+<body>
+  <main class="auth-shell">
+    <section class="brand-side" aria-hidden="true">
+      <div class="grid-shimmer"></div>
+      <div class="mesh-blob blob-one"></div>
+      <div class="mesh-blob blob-two"></div>
+      <div class="mesh-blob blob-three"></div>
+      <div class="shape shape-one circle"></div>
+      <div class="shape shape-two diamond"></div>
+      <div class="shape shape-three circle"></div>
+      <div class="shape shape-four diamond"></div>
+      <div class="shape shape-five circle"></div>
+
+      <div class="logo">
+        <span class="logo-mark"></span>
+        <span>TaskFlow</span>
       </div>
-      <p class="muted mono" style="font-size:12px; line-height:1.6; margin-bottom:0;">
-        admin@test.com / Test1234<br>
-        member1@test.com / Test1234<br>
-        member2@test.com / Test1234
-      </p>
-    </div>
-    <form id="login-form" class="form-grid">
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" required>
+
+      <div class="hero-copy">
+        <h1>Manage work,<br>deliver faster.</h1>
+        <p>Plan projects, coordinate teammates, and move every task from idea to done with a workspace built for momentum.</p>
       </div>
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+      <div class="feature-row">
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+            <path d="m17 11 2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Role-based access
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="m7 14 4-4 3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Real-time tracking
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M7 21v-2a4 4 0 0 1 3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Team collaboration
+        </div>
       </div>
-      <button class="btn btn-primary full" type="submit">Login</button>
-      <div id="error" class="error-text"></div>
-      <p class="muted">New here? <a href="/signup">Create an account</a></p>
-    </form>
-  </section>
+    </section>
+
+    <section class="form-side">
+      <div class="auth-form-wrap">
+        <div class="logo mobile-logo">
+          <span class="logo-mark"></span>
+          <span>TaskFlow</span>
+        </div>
+
+        <h2 class="form-heading">Welcome back</h2>
+        <p class="form-subtitle">Sign in to continue planning, tracking, and shipping work with your team.</p>
+
+        <div class="demo-row" aria-label="Demo accounts">
+          <button class="demo-btn demo-login" type="button" data-email="admin@test.com" data-password="Test1234">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="m9 12 2 2 4-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Admin demo
+          </button>
+          <button class="demo-btn demo-login" type="button" data-email="member1@test.com" data-password="Test1234">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Member demo
+          </button>
+        </div>
+
+        <form id="login-form" class="form-grid">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <input id="password" name="password" class="password-input" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+              <button class="toggle-password" type="button" data-target="password" aria-label="Show password">
+                <svg class="eye-open" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" fill="none" aria-hidden="true" hidden>
+                  <path d="m3 3 18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9.9 4.24A10.5 10.5 0 0 1 12 4c6.5 0 10 8 10 8a18.6 18.6 0 0 1-3.05 4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6.6 6.6C3.72 8.54 2 12 2 12s3.5 8 10 8a9.7 9.7 0 0 0 4.1-.9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="forgot-row">
+            <a href="#" aria-label="Forgot password">Forgot password?</a>
+          </div>
+
+          <div class="form-actions">
+            <button id="submit-btn" class="submit-btn" type="submit">
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="button-text">Sign in</span>
+            </button>
+          </div>
+
+          <div id="error" class="error-text"></div>
+          <p class="auth-link">Don't have an account? <a href="/signup">Sign up</a></p>
+        </form>
+
+        <div class="proof">Trusted by 10,000+ teams</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-container"></div>
+  <script src="/static/js/main.js"></script>
   <script src="/static/js/api.js"></script>
   <script>
+    document.querySelectorAll(".toggle-password").forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = document.getElementById(button.dataset.target);
+        const isHidden = target.type === "password";
+        target.type = isHidden ? "text" : "password";
+        button.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+        button.querySelector(".eye-open").hidden = isHidden;
+        button.querySelector(".eye-closed").hidden = !isHidden;
+      });
+    });
+
     async function loginWithCredentials(email, password) {
       const error = document.getElementById("error");
+      const submitButton = document.getElementById("submit-btn");
+      const buttonText = submitButton.querySelector(".button-text");
       error.textContent = "";
+      submitButton.disabled = true;
+      submitButton.classList.add("loading");
+      buttonText.textContent = "Signing in";
       try {
         const result = await apiPost("/api/auth/login", {
           email,
@@ -60,6 +660,11 @@
         window.location.href = "/dashboard";
       } catch (err) {
         error.textContent = err.message;
+        showToast(err.message, "error");
+      } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove("loading");
+        buttonText.textContent = "Sign in";
       }
     }
 
