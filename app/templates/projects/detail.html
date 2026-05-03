@@ -44,7 +44,7 @@
     const data = await apiGet(`/api/projects/${projectId}`);
     projectMembers = data.members;
     const user = getStoredUser();
-    isAdmin = data.members.some((member) => member.user_id === user?.id && member.role === "admin");
+    isAdmin = data.members.some((member) => String(member.user_id) === String(user?.id) && member.role === "admin");
     document.getElementById("project-title").textContent = data.project.name;
     document.getElementById("project-name").textContent = data.project.name;
     document.getElementById("project-description").textContent = data.project.description || "No description";

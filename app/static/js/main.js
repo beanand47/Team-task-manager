@@ -79,5 +79,15 @@
     document.querySelectorAll(".nav-link").forEach((link) => {
       if (link.getAttribute("href") === window.location.pathname) link.classList.add("active");
     });
+
+    const projectId = document.body.dataset.projectId;
+    const membersLink = document.getElementById("project-members-link");
+    if (projectId && membersLink) {
+      membersLink.href = `/projects/${projectId}/members`;
+      membersLink.style.display = "block";
+      if (window.location.pathname === membersLink.getAttribute("href")) {
+        membersLink.classList.add("active");
+      }
+    }
   });
 })();

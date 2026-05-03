@@ -20,7 +20,7 @@
   let currentUser = null;
 
   function memberRow(member) {
-    const canRemove = isAdmin && member.user_id !== currentUser?.id;
+    const canRemove = isAdmin && String(member.user_id) !== String(currentUser?.id);
     const roleCell = isAdmin ? `<select data-role-user="${member.user_id}"><option value="member" ${member.role === "member" ? "selected" : ""}>Member</option><option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option></select>` : `<span class="badge status-in_progress">${member.role}</span>`;
     return `<tr>
       <td><div class="member-row"><span class="initials">${initials(member.user.name)}</span><strong>${member.user.name}</strong></div></td>
@@ -34,7 +34,7 @@
   async function loadMembers() {
     currentUser = getStoredUser();
     const members = await apiGet(`/api/projects/${projectId}/members`);
-    const me = members.find((member) => member.user_id === currentUser?.id);
+    const me = members.find((member) => String(member.user_id) === String(currentUser?.id));
     isAdmin = me?.role === "admin";
     document.getElementById("invite-card").style.display = isAdmin ? "block" : "none";
     document.getElementById("members-wrap").innerHTML = members.length ? `
